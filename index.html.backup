@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Gallery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:       #0e0e0e;
+  --bg-side:  #0f0f0f;
+  --bg-input: #1a1a1a;
+  --bg-hover: #1c1c1c;
+  --t1:       #e0e0e0;
+  --t2:       #999;
+  --t3:       #555;
+  --accent:   #c45a3c;
+  --accent-bg:#2a1812;
+  --border:   #1e1e1e;
+  --gap:      4px;
+  --detail-w: 230px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex}
+
+/* ══════════ LEFT SIDEBAR ══════════ */
+.sidebar{width:140px;flex-shrink:0;background:var(--bg-side);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 0;overflow-y:auto;z-index:100}
+.sidebar::-webkit-scrollbar{width:0}
+.sb-logo{padding:0 16px 20px;font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+.sb-section{padding:2px 0 8px;margin:0 8px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;font-size:13px;color:var(--t2);cursor:pointer;transition:all .15s;margin-bottom:1px;white-space:nowrap}
+.sb-item:hover{background:var(--bg-hover);color:var(--t1)}
+.sb-item.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.sb-item svg{width:16px;height:16px;flex-shrink:0;opacity:.6}
+.sb-item.active svg{opacity:1;color:var(--accent)}
+
+/* ══════════ MAIN AREA ══════════ */
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── Top bar ── */
+.topbar{height:50px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;background:var(--bg)}
+.prompt-input-wrap{flex:1;max-width:600px;display:flex;align-items:center;gap:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:0 14px;height:34px;transition:border-color .2s}
+.prompt-input-wrap:focus-within{border-color:#444}
+.prompt-input-wrap svg{color:var(--t3);flex-shrink:0}
+.prompt-input{background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:inherit}
+.prompt-input::placeholder{color:var(--t3)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.tb-icon{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--t3);cursor:pointer;transition:all .15s}
+.tb-icon:hover{background:var(--bg-hover);color:var(--t1)}
+.tb-icon.spinning svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Gallery scroll area ── */
+.gallery{flex:1;overflow-y:auto;padding:8px 16px 60px 20px}
+.gallery::-webkit-scrollbar{width:6px}
+.gallery::-webkit-scrollbar-track{background:transparent}
+.gallery::-webkit-scrollbar-thumb{background:#282828;border-radius:3px}
+
+/* ══════════ DATE GROUP HEADER ══════════ */
+.date-header{font-size:13px;color:var(--t2);font-weight:400;padding:18px 0 10px;letter-spacing:.2px}
+.date-header:first-child{padding-top:6px}
+
+/* ══════════ GENERATION GROUP ══════════
+   Each group = image-area (left) + detail panel (right, fixed width).
+   Container aspect-ratio is FIXED per layout type (not per image).
+   Images use object-fit:cover — overflow is clipped; lightbox shows full image.
+*/
+.gen-group{
+  display:flex;
+  gap:0;
+  margin-bottom:var(--gap);
+  align-items:stretch;
+}
+
+/* ── Image area ── */
+.gen-group .img-area{
+  flex:0 1 auto;
+  min-width:0;
+  display:flex;
+  gap:var(--gap);
+  align-items:stretch;
+}
+
+/* Portrait / Square: images in one row */
+.gen-group.portrait .img-area,
+.gen-group.square .img-area{
+  flex-direction:row;
+}
+
+/* Landscape: images in 2-col CSS grid */
+.gen-group.landscape .img-area{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-auto-rows:1fr;
+  gap:var(--gap);
+}
+
+/* ── Image cell ── */
+/* Fixed container aspect-ratio per layout type. Height fills the row. */
+.gen-group .img-cell{
+  position:relative;
+  border-radius:5px;
+  overflow:hidden;
+  cursor:pointer;
+  background:#151515;
+  min-width:0;
+  flex:none;
+}
+/* Portrait containers: ~3:4 */
+.gen-group.portrait .img-cell{
+  aspect-ratio:3/4;
+}
+/* Square containers: ~1:1 */
+.gen-group.square .img-cell{
+  aspect-ratio:1/1;
+}
+/* Landscape grid: cells fill grid area */
+.gen-group.landscape .img-cell{
+  aspect-ratio:auto;
+  width:100%;
+  height:100%;
+}
+
+.gen-group .img-cell img{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+  transition:filter .2s;
+}
+.gen-group .img-cell:hover img{filter:brightness(1.08)}
+
+/* ══════════ DETAIL PANEL (fixed right, right-aligned) ══════════ */
+.row-detail{
+  width:var(--detail-w);
+  flex-shrink:0;
+  margin-left:auto;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  padding:4px 0 4px 18px;
+  gap:8px;
+  overflow:hidden;
+}
+
+/* Prompt text */
+.row-detail .rd-prompt{
+  font-size:12.5px;color:var(--t2);line-height:1.55;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  overflow:hidden;word-break:break-word;
+}
+.row-detail .rd-prompt.empty{color:var(--t3);font-style:italic;font-size:11px}
+
+/* Thumbnails grid — matches Midjourney 5-col layout */
+.row-detail .rd-thumbs{display:flex;flex-wrap:wrap;gap:3px}
+.row-detail .rd-thumb{
+  width:36px;height:36px;border-radius:4px;
+  overflow:hidden;border:2px solid transparent;
+  cursor:pointer;transition:border-color .15s;
+}
+.row-detail .rd-thumb:hover{border-color:#555}
+.row-detail .rd-thumb.active{border-color:var(--accent)}
+.row-detail .rd-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* Parameter tags — pushed to bottom */
+.row-detail .rd-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto}
+.row-detail .rd-tag{
+  font-size:10.5px;padding:3px 8px;border-radius:4px;
+  background:var(--bg-input);border:1px solid var(--border);
+  color:var(--t2);white-space:nowrap;
+}
+
+/* ── Video rows ── */
+.vid-row{display:flex;gap:var(--gap);margin-bottom:var(--gap);height:200px;align-items:stretch}
+.vid-row .vid-cell{flex:1;position:relative;border-radius:5px;overflow:hidden;cursor:pointer;background:#151515;max-width:280px}
+.vid-cell video{width:100%;height:100%;object-fit:cover;display:block}
+.vid-cell .play-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3);opacity:0;transition:opacity .2s}
+.vid-cell:hover .play-overlay{opacity:1}
+
+/* ══════════ RESPONSIVE ══════════ */
+@media (max-width: 1000px) {
+  :root{--detail-w:200px}
+  .row-detail{padding-left:12px}
+  .row-detail .rd-thumb{width:30px;height:30px}
+  .row-detail .rd-prompt{-webkit-line-clamp:2;font-size:11.5px}
+}
+@media (max-width: 700px) {
+  .gen-group{flex-direction:column}
+  .gen-group .img-area{min-height:180px}
+  .gen-group.landscape .img-area{min-height:240px}
+  .row-detail{width:100%;padding:10px 0 0;flex-direction:row;flex-wrap:wrap;gap:6px}
+  .row-detail .rd-prompt{flex:1;min-width:150px;-webkit-line-clamp:2}
+  .row-detail .rd-tags{margin-top:0}
+  .gallery{padding:8px 10px 60px}
+}
+
+/* ══════════ LIGHTBOX ══════════ */
+.lightbox{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.95);backdrop-filter:blur(30px);align-items:center;justify-content:center;flex-direction:column}
+.lightbox.active{display:flex}
+.lb-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.06);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.lb-close:hover{background:rgba(255,255,255,.12)}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.lb-nav:hover{background:rgba(255,255,255,.1)}
+.lb-nav.prev{left:20px}
+.lb-nav.next{right:20px}
+.lb-media{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:4px;box-shadow:0 8px 60px rgba(0,0,0,.6)}
+.lb-video{max-width:90vw;max-height:85vh;border-radius:4px;box-shadow:0 8px 60px rgba(0,0,0,.6);outline:none}
+.lb-info{margin-top:10px;font-size:12px;color:var(--t3);display:flex;gap:14px;align-items:center}
+.lb-info .name{color:var(--t2);font-weight:500}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:#1a1a1a;border:1px solid var(--border);color:var(--t1);padding:8px 18px;border-radius:8px;font-size:12px;box-shadow:0 4px 24px rgba(0,0,0,.5);transition:transform .3s;z-index:2000}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Empty */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:40vh;color:var(--t3);gap:10px;font-size:14px}
+.empty svg{opacity:.15}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LEFT SIDEBAR ══════════ -->
+<nav class="sidebar">
+  <div class="sb-logo">AI Gallery</div>
+  <div class="sb-section">
+    <div class="sb-item active" data-tab="images" onclick="switchTab('images')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Create
+    </div>
+    <div class="sb-item" data-tab="videos" onclick="switchTab('videos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Videos
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════ MAIN AREA ══════════ -->
+<div class="main-area">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="prompt-input-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input class="prompt-input" id="searchInput" type="text" placeholder="Search your creations...">
+    </div>
+    <div class="topbar-right">
+      <div class="tb-icon" id="refreshBtn" title="Refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- Gallery -->
+  <div class="gallery" id="gallery"></div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose">&times;</button>
+  <button class="lb-nav prev" id="lbPrev">&#8249;</button>
+  <button class="lb-nav next" id="lbNext">&#8250;</button>
+  <img class="lb-media" id="lbImg" src="" alt="" style="display:none">
+  <video class="lb-video" id="lbVid" controls style="display:none"></video>
+  <div class="lb-info"><span class="name" id="lbName"></span><span id="lbSize"></span><span id="lbDims"></span></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+const IMG_BASE = '/images';
+const VID_BASE = '/videos';
+
+let allImages = [], allVideos = [];
+let activeTab = 'images';
+let flatImages = [];
+
+// ── Init ──
+async function init() {
+  await Promise.all([loadImages(), loadVideos()]);
+  setupEvents();
+  render();
+}
+
+async function loadImages() {
+  try { const r = await fetch(`${API}/api/images`); const d = await r.json(); allImages = d.images || []; } catch(e) { console.error(e); }
+}
+async function loadVideos() {
+  try { const r = await fetch(`${API}/api/videos`); const d = await r.json(); allVideos = d.videos || []; } catch(e) { console.error(e); }
+}
+
+// ── Group images by generation round (30s window) ──
+function groupByGeneration(images) {
+  const sorted = [...images].sort((a,b) => a.mtime - b.mtime);
+  const groups = [];
+  let current = null;
+  for (const img of sorted) {
+    if (!current || img.mtime - current.endTime > 30000 || img.session !== current.session) {
+      current = { session: img.session, startTime: img.mtime, endTime: img.mtime, images: [img] };
+      groups.push(current);
+    } else {
+      current.images.push(img);
+      current.endTime = img.mtime;
+    }
+  }
+  return groups.reverse();
+}
+
+// ── Group videos ──
+function groupVideosByGeneration(videos) {
+  const sorted = [...videos].sort((a,b) => a.mtime - b.mtime);
+  const groups = [];
+  let current = null;
+  for (const v of sorted) {
+    const dir = v.relPath.includes('/') ? v.relPath.substring(0, v.relPath.lastIndexOf('/')) : '_root';
+    if (!current || v.mtime - current.endTime > 60000 || dir !== current.dir) {
+      current = { dir, startTime: v.mtime, endTime: v.mtime, videos: [v] };
+      groups.push(current);
+    } else {
+      current.videos.push(v);
+      current.endTime = v.mtime;
+    }
+  }
+  return groups.reverse();
+}
+
+// ── Switch tabs ──
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.remove('active'));
+  const target = document.querySelector(`.sb-item[data-tab="${tab}"]`);
+  if (target) target.classList.add('active');
+  render();
+}
+
+// ── Render ──
+function render() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (activeTab === 'images') renderImages(query);
+  else renderVideos(query);
+}
+
+// ── Format date header like Midjourney: "Mar 3, 2026" / "Today" ──
+function fmtDateHeader(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()) {
+    return 'Today';
+  }
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+
+// ── Compute aspect-ratio tag string ──
+function getAspectTag(w, h) {
+  if (!w || !h) return null;
+  const g = gcd(w, h);
+  const rw = w / g, rh = h / g;
+  if (rw > 50 || rh > 50) {
+    const r = w / h;
+    if (Math.abs(r - 1) < 0.08) return 'ar 1:1';
+    if (Math.abs(r - 4/3) < 0.08) return 'ar 4:3';
+    if (Math.abs(r - 3/4) < 0.08) return 'ar 3:4';
+    if (Math.abs(r - 16/9) < 0.12) return 'ar 16:9';
+    if (Math.abs(r - 9/16) < 0.12) return 'ar 9:16';
+    if (Math.abs(r - 3/2) < 0.08) return 'ar 3:2';
+    if (Math.abs(r - 2/3) < 0.08) return 'ar 2:3';
+    return `ar ${w}:${h}`;
+  }
+  return `ar ${rw}:${rh}`;
+}
+
+// ── Classify aspect ratio into layout type ──
+// portrait: ar < 0.85 (e.g. 9:16, 3:4)
+// landscape: ar > 1.2 (e.g. 16:9, 3:2)
+// square: everything else
+function classifyAR(w, h) {
+  if (!w || !h) return 'square';
+  const ar = w / h;
+  if (ar < 0.85) return 'portrait';
+  if (ar > 1.2) return 'landscape';
+  return 'square';
+}
+
+// ── Compute row height based on layout type ──
+// These are tuned to visually match Midjourney's proportions:
+// - Portrait (9:16, 3:4): tall row because images are narrow & tall
+// - Square (1:1): medium row
+// - Landscape (16:9): shorter individual rows but 2×2 grid makes it tall overall
+function computeRowHeight(layoutType, imgCount) {
+  if (layoutType === 'portrait') return 260;
+  if (layoutType === 'square') return 190;
+  if (layoutType === 'landscape') return 220; // per row of 2, so 2 rows = 2*220+gap
+  return 200;
+}
+
+// ── Build detail panel HTML ──
+function buildDetailHTML(g, layoutType) {
+  const firstImg = g.images[0];
+  const prompt = firstImg.prompt || '';
+  const userTags = firstImg.tags || [];
+  const count = g.images.length;
+
+  let html = '<div class="row-detail">';
+
+  // Prompt text
+  if (prompt) {
+    html += `<div class="rd-prompt">${esc(prompt)}</div>`;
+  } else {
+    html += `<div class="rd-prompt empty">No prompt</div>`;
+  }
+
+  // Thumbnail grid (always show for groups)
+  if (count > 1) {
+    html += '<div class="rd-thumbs">';
+    g.images.forEach(img => {
+      html += `<div class="rd-thumb" onclick="openLightboxImg('${esc(img.key)}')"><img src="${IMG_BASE}/${img.session}/${img.name}" loading="lazy"></div>`;
+    });
+    html += '</div>';
+  }
+
+  // Tags: aspect ratio + user tags (pushed to bottom via margin-top:auto)
+  html += '<div class="rd-tags">';
+  const arTag = getAspectTag(firstImg.width, firstImg.height);
+  if (arTag) html += `<span class="rd-tag">${esc(arTag)}</span>`;
+  userTags.forEach(t => { html += `<span class="rd-tag">${esc(t)}</span>`; });
+  html += '</div>';
+
+  html += '</div>';
+  return html;
+}
+
+function renderImages(query) {
+  const filtered = allImages.filter(img => !query || img.name.toLowerCase().includes(query) || (img.prompt||'').toLowerCase().includes(query) || (img.notes||'').toLowerCase().includes(query));
+  const groups = groupByGeneration(filtered);
+  flatImages = groups.flatMap(g => g.images);
+
+  if (groups.length === 0) {
+    document.getElementById('gallery').innerHTML = `<div class="empty"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>No images found</span></div>`;
+    return;
+  }
+
+  let html = '';
+  let lastDateStr = '';
+
+  groups.forEach((g) => {
+    // Date header
+    const dateStr = fmtDateHeader(g.startTime);
+    if (dateStr !== lastDateStr) {
+      html += `<div class="date-header">${esc(dateStr)}</div>`;
+      lastDateStr = dateStr;
+    }
+
+    const firstImg = g.images[0];
+    const layoutType = classifyAR(firstImg.width, firstImg.height);
+    const count = g.images.length;
+    const rowH = computeRowHeight(layoutType, count);
+
+    if (layoutType === 'landscape') {
+      // ── LANDSCAPE: 2-column grid (2 images per row, 4 images = 2×2) ──
+      const totalH = count > 2 ? (rowH * 2 + 4) : rowH; // 4px = gap
+      html += `<div class="gen-group landscape" style="height:${totalH}px">`;
+      html += `<div class="img-area">`;
+      g.images.slice(0, 4).forEach(img => {
+        html += `<div class="img-cell" onclick="openLightboxImg('${esc(img.key)}')">
+          <img src="${IMG_BASE}/${img.session}/${img.name}" loading="lazy" alt="${esc(img.name)}">
+        </div>`;
+      });
+      html += `</div>`;
+      html += buildDetailHTML(g, layoutType);
+      html += `</div>`;
+    } else {
+      // ── PORTRAIT / SQUARE: images in one row with fixed container ratio ──
+      html += `<div class="gen-group ${layoutType}" style="height:${rowH}px">`;
+      html += `<div class="img-area">`;
+      g.images.slice(0, 4).forEach(img => {
+        html += `<div class="img-cell" onclick="openLightboxImg('${esc(img.key)}')">
+          <img src="${IMG_BASE}/${img.session}/${img.name}" loading="lazy" alt="${esc(img.name)}">
+        </div>`;
+      });
+      html += `</div>`;
+      html += buildDetailHTML(g, layoutType);
+      html += `</div>`;
+    }
+  });
+
+  document.getElementById('gallery').innerHTML = html;
+  window._groups = groups;
+}
+
+function renderVideos(query) {
+  const filtered = allVideos.filter(v => !query || v.name.toLowerCase().includes(query) || v.relPath.toLowerCase().includes(query) || (v.prompt||'').toLowerCase().includes(query));
+  const groups = groupVideosByGeneration(filtered);
+
+  if (groups.length === 0) {
+    document.getElementById('gallery').innerHTML = `<div class="empty"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>No videos found</span></div>`;
+    return;
+  }
+
+  let html = '';
+  let lastDateStr = '';
+  groups.forEach((g, gi) => {
+    const dateStr = fmtDateHeader(g.startTime);
+    if (dateStr !== lastDateStr) {
+      html += `<div class="date-header">${esc(dateStr)}</div>`;
+      lastDateStr = dateStr;
+    }
+
+    html += `<div class="vid-row">`;
+    g.videos.forEach(v => {
+      html += `<div class="vid-cell" onclick="openLightboxVid('${esc(v.key)}')">
+        <video src="${VID_BASE}/${v.relPath}" preload="metadata" muted></video>
+        <div class="play-overlay"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21"/></svg></div>
+      </div>`;
+    });
+
+    const firstVid = g.videos[0];
+    const prompt = firstVid.prompt || '';
+    const tags = firstVid.tags || [];
+    html += `<div class="row-detail">`;
+    if (prompt) {
+      html += `<div class="rd-prompt">${esc(prompt)}</div>`;
+    } else {
+      html += `<div class="rd-prompt empty">No prompt</div>`;
+    }
+    if (tags.length > 0) {
+      html += `<div class="rd-tags">`;
+      tags.forEach(t => { html += `<span class="rd-tag">${esc(t)}</span>`; });
+      html += `</div>`;
+    }
+    html += `</div>`;
+
+    html += `</div>`;
+  });
+
+  document.getElementById('gallery').innerHTML = html;
+  window._vidGroups = groups;
+}
+
+// ── Lightbox ──
+let currentLbIndex = -1;
+let lbType = 'image';
+
+function openLightboxImg(key) {
+  lbType = 'image';
+  const idx = flatImages.findIndex(i => i.key === key);
+  if (idx < 0) return;
+  currentLbIndex = idx;
+  showLightbox();
+}
+
+function openLightboxVid(key) {
+  lbType = 'video';
+  const vid = allVideos.find(v => v.key === key);
+  if (!vid) return;
+  currentLbIndex = allVideos.indexOf(vid);
+  showLightbox();
+}
+
+function showLightbox() {
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lbImg');
+  const lbVid = document.getElementById('lbVid');
+
+  if (lbType === 'image') {
+    const img = flatImages[currentLbIndex];
+    if (!img) return;
+    lbImg.src = `${IMG_BASE}/${img.session}/${img.name}`;
+    lbImg.style.display = 'block';
+    lbVid.style.display = 'none';
+    lbVid.pause();
+    document.getElementById('lbName').textContent = img.name;
+    document.getElementById('lbSize').textContent = fmtSize(img.size);
+    const tmp = new Image();
+    tmp.onload = () => { document.getElementById('lbDims').textContent = `${tmp.naturalWidth}×${tmp.naturalHeight}`; };
+    tmp.src = lbImg.src;
+  } else {
+    const vid = allVideos[currentLbIndex];
+    if (!vid) return;
+    lbVid.src = `${VID_BASE}/${vid.relPath}`;
+    lbVid.style.display = 'block';
+    lbImg.style.display = 'none';
+    document.getElementById('lbName').textContent = vid.name;
+    document.getElementById('lbSize').textContent = fmtSize(vid.size);
+    document.getElementById('lbDims').textContent = '';
+  }
+
+  lb.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.body.style.overflow = '';
+  document.getElementById('lbVid').pause();
+}
+
+function navLb(dir) {
+  const list = lbType === 'image' ? flatImages : allVideos;
+  currentLbIndex += dir;
+  if (currentLbIndex < 0) currentLbIndex = list.length - 1;
+  if (currentLbIndex >= list.length) currentLbIndex = 0;
+  showLightbox();
+}
+
+// ── Events ──
+function setupEvents() {
+  document.getElementById('searchInput').addEventListener('input', render);
+
+  document.getElementById('refreshBtn').onclick = async () => {
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('spinning');
+    await Promise.all([loadImages(), loadVideos()]);
+    render();
+    btn.classList.remove('spinning');
+    showToast('Refreshed');
+  };
+
+  // Lightbox events
+  document.getElementById('lbClose').onclick = closeLightbox;
+  document.getElementById('lbPrev').onclick = () => navLb(-1);
+  document.getElementById('lbNext').onclick = () => navLb(1);
+  document.getElementById('lightbox').onclick = e => { if (e.target.id === 'lightbox') closeLightbox(); };
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('lightbox').classList.contains('active')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') navLb(-1);
+    if (e.key === 'ArrowRight') navLb(1);
+  });
+}
+
+// ── Helpers ──
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
+
+init();
+</script>
+
+<!-- Agentation 官方组件 (通过 CDN 加载 React) -->
+<div id="agentation-root"></div>
+
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<script type="module">
+  // 动态导入 Agentation
+  const { Agentation } = await import('https://cdn.jsdelivr.net/npm/agentation@2.3.3/+esm');
+  
+  // 创建 React root 并渲染
+  const root = ReactDOM.createRoot(document.getElementById('agentation-root'));
+  root.render(
+    React.createElement(Agentation, {
+      endpoint: 'http://localhost:4747',
+      sessionId: 'visual-browser'
+    })
+  );
+  
+  console.log('✅ Agentation 已加载');
+</script>
+</body>
+</html>
