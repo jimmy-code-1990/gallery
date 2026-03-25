@@ -150,6 +150,7 @@ let flat = [];
 let cur = 0;
 
 function render() {
+  BATCHES.reverse(); // newest first
   const main = document.getElementById('main');
   flat = [];
   BATCHES.forEach((b, bi) => {
