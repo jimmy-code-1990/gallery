@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -68,7 +68,7 @@
 
 <header>
   <h1>🎨 AI Gallery</h1>
-  <span id="total">加载中…</span>
+  <span id="total">Loading...</span>
 </header>
 
 <div id="main"></div>
@@ -81,8 +81,8 @@
     <p id="lb-prompt"></p>
   </div>
   <div class="lightbox-nav">
-    <button onclick="nav(-1)">← 上一张</button>
-    <button onclick="nav(1)">下一张 →</button>
+    <button onclick="nav(-1)">← Prev</button>
+    <button onclick="nav(1)">Next →</button>
   </div>
 </div>
 
@@ -90,9 +90,9 @@
 const BATCHES = [
   {
     id: "ghost-bride-01",
-    title: "鬼新娘角色参考图",
+    title: "Ghost Bride - Character Ref",
     date: "2026-03-25",
-    model: "即梦 图片4.0",
+    model: "Jimeng Image 4.0",
     prompt: "Hyper-realistic Chinese ghost bride portrait, pale white face with cracked skin texture, sunken dark eyes with no pupils, traditional red wedding headdress slightly tilted, hair disheveled, tattered red qipao with black embroidery details, subtle dried blood at corner of lips, ultra-realistic skin texture, cinematic under-lighting, deep shadow contrast, desaturated cold tones, Chinese horror aesthetic, 8K, photorealistic, full body, neutral background",
     images: [
       "output/ghost_bride_01.jpg",
@@ -104,10 +104,10 @@ const BATCHES = [
   ,
   {
     id: "shiri-scene01",
-    title: "《十日终焉》· 密室初醒",
+    title: "Ten Days End - Sealed Room Awakening",
     date: "2026-03-25",
-    model: "即梦 图片4.0",
-    prompt: "电影级恐怖场景，密封无门无窗的昏暗房间，十个衣着破旧沾满灰尘的人围坐在斑驳大圆桌旁沉睡，桌面中央一座精密座钟，一个穿黑色西服戴着山羊头骨面具的男人站在旁边凝视众人，天花板垂下黑色电线挂着钨丝灯，深度阴影，超写实，冷色调，中式恐怖氛围，8K",
+    model: "Jimeng Image 4.0",
+    prompt: "Cinematic horror, sealed room no windows no doors, ten dusty unconscious people around a round weathered table, ornate clock center, goat-skull masked man in black suit standing nearby, tungsten bulb hanging by black cord, deep shadows, hyper-realistic, cold tones, Chinese horror, 8K",
     images: [
       "output/shiri-ep01/scene01_1.jpg",
       "output/shiri-ep01/scene01_2.jpg",
@@ -118,10 +118,10 @@ const BATCHES = [
   ,
   {
     id: "char-qixia",
-    title: "角色设定 · 齐夏 Qi Xia",
+    title: "Character - Qi Xia (con artist)",
     date: "2026-03-25",
-    model: "即梦 图片4.0",
-    prompt: "Chinese young man, late 20s, calm cold expression, sharp intelligent dark eyes, slightly messy black hair, dusty worn casual jacket, post-apocalyptic survivor",
+    model: "Jimeng Image 4.0",
+    prompt: "Qi Xia - Chinese man late 20s, cold calm expression, sharp dark eyes, messy black hair, dusty worn jacket, post-apocalyptic survivor",
     images: [
       "output/chars/qixia_1.jpg",
       "output/chars/qixia_2.jpg",
@@ -132,10 +132,10 @@ const BATCHES = [
   ,
   {
     id: "char-linqin",
-    title: "角色设定 · 林檎 Lin Qin",
+    title: "Character - Lin Qin (psychologist)",
     date: "2026-03-25",
-    model: "即梦 图片4.0",
-    prompt: "Chinese young woman, mid 20s, warm gentle psychology counselor, soft kind eyes, natural makeup, slightly long black hair, dusty worn modest clothes, post-apocalyptic survivor",
+    model: "Jimeng Image 4.0",
+    prompt: "Lin Qin - Chinese woman mid 20s, warm gentle psychologist, soft kind eyes, natural makeup, long black hair, dusty modest clothes, post-apocalyptic survivor",
     images: [
       "output/chars/linqin_1.jpg",
       "output/chars/linqin_2.jpg",
@@ -143,7 +143,7 @@ const BATCHES = [
       "output/chars/linqin_4.jpg"
     ]
   }
-  // AI 每次生图后自动追加新批次
+  // AI auto-append new batch after each generation
 ];
 
 let flat = [];
@@ -160,7 +160,7 @@ function render() {
     sec.className = 'batch';
     sec.innerHTML = `
       <div class="batch-title">${b.title}</div>
-      <div class="batch-meta">${b.date} · ${b.model} · ${b.images.length} 张</div>
+      <div class="batch-meta">${b.date} · ${b.model} · ${b.images.length}  images</div>
       <div class="batch-prompt">${b.prompt}</div>
       <div class="grid" id="g-${bi}"></div>
     `;
@@ -180,7 +180,7 @@ function render() {
       main.appendChild(hr);
     }
   });
-  document.getElementById('total').textContent = `共 ${flat.length} 张`;
+  document.getElementById('total').textContent = `Total:  ${flat.length}  images`;
 }
 
 function open_lb(idx) {
@@ -203,3 +203,4 @@ render();
 </script>
 </body>
 </html>
+
