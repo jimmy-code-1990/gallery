@@ -188,6 +188,14 @@ const BATCHES = [
   }
 
   ,{
+    id: "qixia-img2img-multiview-0325b",
+    title: "Qi Xia - img2img Full Reference Sheet (multi-view + 4 expressions, batch2)",
+    date: "2026-03-25",
+    model: "Jimeng Image 4.0 (img2img, anchors: qixia_1+4+front_hires)",
+    prompt: "Character reference sheet, keep the exact same face, hairstyle and costume from the reference images. Full body multi-view layout on pure white background: front view (left), 3/4 view (center-left), side profile view (center-right), back view (right). Below: 4 portrait expression close-ups in a row (neutral, alert/suspicious, focused/cold, intense/angry). Chinese young man late 20s, post-apocalyptic survivor, calm sharp dark eyes, messy black hair, dusty worn dark grey jacket, hyper-realistic photorealistic, 8K, character design reference sheet, all views same proportions bottom-aligned",
+    images: ["output/char-sheet-v2/qixia_img2img_multiview_1.png","output/char-sheet-v2/qixia_img2img_multiview_2.png","output/char-sheet-v2/qixia_img2img_multiview_3.png","output/char-sheet-v2/qixia_img2img_multiview_4.png"]
+  }
+  ,{
     id: "jimeng-cinema-refsheet-v3",
     title: "Qi Xia - Cinema Grade Reference Sheet v3 (3-view + actions + 9 expressions)",
     date: "2026-03-25",
@@ -195,7 +203,7 @@ const BATCHES = [
     prompt: "Ultra-high-quality cinematic reference sheet: turnaround 3-view + 2 action poses + 3x3 expression grid. Industrial grey bg, foot shadows, pore-level skin detail, physical fabric simulation.",
     images: ["output/char-sheet-v2/qixia_refsheet_v3_cinema.jpg"]
   }
-    // AI auto-append new batch after each generation
+  // AI auto-append new batch after each generation
 ];
 
 let flat = [];
