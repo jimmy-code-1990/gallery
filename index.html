@@ -186,7 +186,16 @@ const BATCHES = [
     prompt: "img2img with anchor ref 1+4. Character reference sheet: front/3-4/side/back + 4 expressions.",
     images: ["output/char-sheet-v2/qixia_refsheet_anchored_v1.jpg"]
   }
-  // AI auto-append new batch after each generation
+
+  ,{
+    id: "jimeng-cinema-refsheet-v3",
+    title: "Qi Xia - Cinema Grade Reference Sheet v3 (3-view + actions + 9 expressions)",
+    date: "2026-03-25",
+    model: "Jimeng Image 4.0 (img2img, cinema standard)",
+    prompt: "Ultra-high-quality cinematic reference sheet: turnaround 3-view + 2 action poses + 3x3 expression grid. Industrial grey bg, foot shadows, pore-level skin detail, physical fabric simulation.",
+    images: ["output/char-sheet-v2/qixia_refsheet_v3_cinema.jpg"]
+  }
+    // AI auto-append new batch after each generation
 ];
 
 let flat = [];
