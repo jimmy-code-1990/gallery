@@ -4,9 +4,160 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Gallery</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f5f5f5; color: #333; font-family: -apple-system, 'PingFang SC', sans-serif; }
+
+    header {
+      background: #fff; border-bottom: 1px solid #e8e8e8;
+      padding: 14px 24px; display: flex; align-items: center; gap: 16px;
+      position: sticky; top: 0; z-index: 10;
+    }
+    header h1 { font-size: 16px; font-weight: 600; }
+    header span { font-size: 12px; color: #999; }
+
+    .batch { padding: 24px 24px 0; }
+    .batch-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .batch-meta { font-size: 12px; color: #999; margin-bottom: 8px; }
+    .batch-prompt {
+      font-size: 11px; color: #888; font-family: monospace;
+      background: #f9f9f9; border: 1px solid #eee;
+      padding: 8px 12px; border-radius: 4px; line-height: 1.5;
+      margin-bottom: 16px; white-space: pre-wrap; word-break: break-all;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px;
+    }
+    .card {
+      background: #fff; border-radius: 6px; overflow: hidden;
+      cursor: pointer; border: 1px solid #e8e8e8;
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+    .card img { width: 100%; height: auto; display: block; }
+    .card-label { padding: 6px 10px; font-size: 11px; color: #999; }
+
+    hr { border: none; border-top: 1px solid #eee; margin: 24px 24px 0; }
+
+    .lightbox {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,0.85);
+      align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 90vw; max-height: 78vh; border-radius: 6px; }
+    .lightbox-info { color: #ccc; text-align: center; max-width: 560px; padding: 0 16px; }
+    .lightbox-info h3 { font-size: 13px; margin-bottom: 6px; color: #fff; }
+    .lightbox-info p { font-size: 11px; font-family: monospace; line-height: 1.6; }
+    .lightbox-close {
+      position: fixed; top: 16px; right: 20px;
+      background: none; border: none; color: #fff; font-size: 24px; cursor: pointer;
+    }
+    .lightbox-nav { display: flex; gap: 10px; }
+    .lightbox-nav button {
+      padding: 7px 18px; border-radius: 5px;
+      background: #fff; border: none; color: #333;
+      cursor: pointer; font-size: 13px;
+    }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+
+<header>
+  <h1>🎨 AI Gallery</h1>
+  <span id="total">加载中…</span>
+</header>
+
+<div id="main"></div>
+
+<div class="lightbox" id="lightbox" onclick="if(event.target===this)close_lb()">
+  <button class="lightbox-close" onclick="close_lb()">✕</button>
+  <img id="lb-img" src="" alt="">
+  <div class="lightbox-info">
+    <h3 id="lb-title"></h3>
+    <p id="lb-prompt"></p>
+  </div>
+  <div class="lightbox-nav">
+    <button onclick="nav(-1)">← 上一张</button>
+    <button onclick="nav(1)">下一张 →</button>
+  </div>
+</div>
+
+<script>
+const BATCHES = [
+  {
+    id: "ghost-bride-01",
+    title: "鬼新娘角色参考图",
+    date: "2026-03-25",
+    model: "即梦 图片4.0",
+    prompt: "Hyper-realistic Chinese ghost bride portrait, pale white face with cracked skin texture, sunken dark eyes with no pupils, traditional red wedding headdress slightly tilted, hair disheveled, tattered red qipao with black embroidery details, subtle dried blood at corner of lips, ultra-realistic skin texture, cinematic under-lighting, deep shadow contrast, desaturated cold tones, Chinese horror aesthetic, 8K, photorealistic, full body, neutral background",
+    images: [
+      "output/ghost_bride_01.jpg",
+      "output/ghost_bride_02.jpg",
+      "output/ghost_bride_03.jpg",
+      "output/ghost_bride_04.jpg"
+    ]
+  }
+  // AI 每次生图后自动追加新批次
+];
+
+let flat = [];
+let cur = 0;
+
+function render() {
+  const main = document.getElementById('main');
+  flat = [];
+  BATCHES.forEach((b, bi) => {
+    const start = flat.length;
+    b.images.forEach(f => flat.push({f, b}));
+
+    const sec = document.createElement('div');
+    sec.className = 'batch';
+    sec.innerHTML = `
+      <div class="batch-title">${b.title}</div>
+      <div class="batch-meta">${b.date} · ${b.model} · ${b.images.length} 张</div>
+      <div class="batch-prompt">${b.prompt}</div>
+      <div class="grid" id="g-${bi}"></div>
+    `;
+    main.appendChild(sec);
+
+    const grid = sec.querySelector(`#g-${bi}`);
+    b.images.forEach((file, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `<img src="${file}" loading="lazy" alt=""><div class="card-label">No.${i+1}</div>`;
+      card.onclick = () => open_lb(start + i);
+      grid.appendChild(card);
+    });
+
+    if (bi < BATCHES.length - 1) {
+      const hr = document.createElement('hr');
+      main.appendChild(hr);
+    }
+  });
+  document.getElementById('total').textContent = `共 ${flat.length} 张`;
+}
+
+function open_lb(idx) {
+  cur = idx;
+  const {f, b} = flat[idx];
+  document.getElementById('lb-img').src = f;
+  document.getElementById('lb-title').textContent = `${b.title} · No.${b.images.indexOf(f)+1}`;
+  document.getElementById('lb-prompt').textContent = b.prompt;
+  document.getElementById('lightbox').classList.add('open');
+}
+function close_lb() { document.getElementById('lightbox').classList.remove('open'); }
+function nav(d) { open_lb((cur + d + flat.length) % flat.length); }
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') close_lb();
+  if (e.key==='ArrowRight') nav(1);
+  if (e.key==='ArrowLeft') nav(-1);
+});
+
+render();
+</script>
 </body>
 </html>
