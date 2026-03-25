@@ -203,7 +203,15 @@ const BATCHES = [
     prompt: "Ultra-high-quality cinematic reference sheet: turnaround 3-view + 2 action poses + 3x3 expression grid. Industrial grey bg, foot shadows, pore-level skin detail, physical fabric simulation.",
     images: ["output/char-sheet-v2/qixia_refsheet_v3_cinema.jpg"]
   }
-  // AI auto-append new batch after each generation
+  ,{
+    id: "qixia-groupA-3view",
+    title: "Qi Xia - Group A: 3-View Turnaround",
+    date: "2026-03-25",
+    model: "Jimeng Image 4.0 (img2img)",
+    prompt: "THREE VIEWS ONLY: front/side/back. Industrial grey bg, foot shadow, 8K. Anchor: qixia_4 + front_hires.",
+    images: ["output/char-sheet-v2/qixia_groupA_3view.jpg"]
+  }
+    // AI auto-append new batch after each generation
 ];
 
 let flat = [];
