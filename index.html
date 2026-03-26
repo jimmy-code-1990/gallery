@@ -207,6 +207,40 @@ const BATCHES = [
     prompt: "Character reference sheet, keep the exact same face, hairstyle and costume from the reference images. Full body multi-view layout on pure white background: front view (left), 3/4 view (center-left), side profile view (center-right), back view (right). Below: 4 portrait expression close-ups in a row (neutral, alert/suspicious, focused/cold, intense/angry). Chinese young man late 20s, post-apocalyptic survivor, calm sharp dark eyes, messy black hair, dusty worn dark grey jacket, hyper-realistic photorealistic, 8K, character design reference sheet, all views same proportions bottom-aligned",
     images: ["output/char-sheet-v2/qixia_img2img_multiview_1.png","output/char-sheet-v2/qixia_img2img_multiview_2.png","output/char-sheet-v2/qixia_img2img_multiview_3.png","output/char-sheet-v2/qixia_img2img_multiview_4.png"]
   }
+  ,{
+    id: "jimeng-cinema-refsheet-v3",
+    title: "Qi Xia - Cinema Grade Reference Sheet v3 (3-view + actions + 9 expressions)",
+    date: "2026-03-25",
+    model: "Jimeng Image 4.0 (img2img, cinema standard)",
+    prompt: "Ultra-high-quality cinematic reference sheet: turnaround 3-view + 2 action poses + 3x3 expression grid. Industrial grey bg, foot shadows, pore-level skin detail, physical fabric simulation.",
+    images: ["output/char-sheet-v2/qixia_refsheet_v3_cinema.jpg"]
+  }
+  ,{
+    id: "qixia-groupA-3view",
+    title: "Qi Xia - Group A: 3-View Turnaround",
+    date: "2026-03-25",
+    model: "Jimeng Image 4.0 (img2img)",
+    prompt: "THREE VIEWS ONLY: front/side/back. Industrial grey bg, foot shadow, 8K. Anchor: qixia_4 + front_hires.",
+    images: ["output/char-sheet-v2/qixia_groupA_3view.jpg"]
+  }
+  
+  ,{
+    id: "qixia-groupC-expr",
+    title: "Qi Xia - Group C: Expression Grid (3x3, 9 emotions)",
+    date: "2026-03-25",
+    model: "Jimeng Image 4.0 (img2img)",
+    prompt: "3x3 expression grid: neutral/cold, alert, focused, angry, sad, crying, shocked, disgusted, exhausted. Industrial grey, 8K pore-level detail.",
+    images: ["output/char-sheet-v2/qixia_groupC_expr.jpg"]
+  }
+    ,{
+    id: "qixia-groupB-action",
+    title: "Qi Xia - Group B: Action Poses (sprint + stride)",
+    date: "2026-03-26",
+    model: "Jimeng Image 4.0 (img2img)",
+    prompt: "TWO ACTION POSES: running sprint + large stride walk. Industrial grey bg, 8K cinematic. Anchor: qixia_4 + front_hires.",
+    images: ["output/char-sheet-v2/qixia_groupB_action.jpg"]
+  }
+    // AI auto-append new batch after each generation
 ];
 
 let flat = [];
